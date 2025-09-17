@@ -1,0 +1,10 @@
+fastapi
+unicorn
+numpy
+pandas
+sqlalchemy
+sqlalchemy-utils
+pydantic
+openai
+python-dotenv
+datetime

@@ -1,0 +1,2 @@
+Node.jsでサーバーで立ち上げる。
+lmstudio server start --model ~/models/gemma-3-1b --port 1234 --api-key lm-studio
