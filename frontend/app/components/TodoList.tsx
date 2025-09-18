@@ -2,6 +2,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { deleteTodo, Todo, updateTodo } from "../api/todoApi";
+import { optimizeSchedule } from "../api/scheduleApi";
 
 type Props = {
   todos: Todo[];
@@ -34,34 +35,9 @@ export default function TodoList({ todos, setTodos, onEdit }: Props) {
 const handleClick = async () => {
   try {
     const today = new Date().toISOString().split("T")[0];
-    const res = await fetch("http://localhost:8000/api/schedule/optimize", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: today }),
-    });
-    const data = await res.json();
-    console.log("APIから返ってきた値:", data); // デバッグ用
-
-    // データが配列でない場合の処理
-    if (!Array.isArray(data)) {
-      console.error("APIレスポンスが配列ではありません:", data);
-      return;
-    }
-
-    // 各要素がTodo型を満たしているか確認
-    const validTodos = data.filter(item => 
-      typeof item === 'object' && 
-      item !== null &&
-      'id' in item &&
-      'title' in item
-    );
-
-    if (validTodos.length === 0) {
-      console.error("有効なTodoデータがありません");
-      return;
-    }
-
-    setTodos(validTodos);
+    const optimizedSchedule = await optimizeSchedule(today);
+    console.log("最適化されたスケジュール:", optimizedSchedule);
+    setTodos(optimizedSchedule);
   } catch (error) {
     console.error("スケジュール最適化中にエラーが発生しました:", error);
   }

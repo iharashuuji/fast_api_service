@@ -1,29 +1,25 @@
 // frontend/app/api/scheduleApi.ts
-export type Schedule = {
-  id: number;
-  task: string;
-  start_time: string;
-  end_time: string;
-};
+import { Todo } from './todoApi';
 
 const BASE_URL = "http://localhost:8000/api/schedule";
 
-export const fetchSchedule = async (): Promise<Schedule[]> => {
+export const fetchSchedule = async (): Promise<Todo[]> => {
   const res = await fetch(BASE_URL);
   return res.json();
 };
 
-export const optimizeSchedule = async (): Promise<Schedule[]> => {
+export const optimizeSchedule = async (date: string): Promise<Todo[]> => {
   const res = await fetch(`${BASE_URL}/optimize`, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ date }),
   });
+  
+  if (!res.ok) {
+    throw new Error(`スケジュール最適化に失敗しました: ${res.statusText}`);
+  }
+  
   return res.json();
-};
-
-const handleDelete = async (id: number) => {
-  await fetch(`http://localhost:8000/api/todo/${id}`, {
-    method: "DELETE",
-  });
-  // stateからも削除して UI 更新
-  setTodos((prev) => prev.filter((todo) => todo.id !== id));
 };

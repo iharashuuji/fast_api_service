@@ -15,7 +15,6 @@ LLMに推論をさせて、スケジュールの最適化を行う
 
 
 # app/services/todo_service.py
-from langchain import LLMChain, PromptTemplate
 from fastapi import FastAPI
 from typing import List
 from app.schemas.todo import TodoCreate, TodoOut
@@ -25,8 +24,9 @@ from app.models.todo_model import TodoModel
 import os
 import json
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
+from langchain_core.prompts import PromptTemplate
+
 from dotenv import load_dotenv
 
 # .env ファイルをロード
