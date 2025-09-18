@@ -1,6 +1,6 @@
-import pytest
 from app.services.todo_service import TodoService
 from app.schemas.todo import TodoCreate
+
 
 def test_create_todo():
     service = TodoService()
