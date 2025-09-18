@@ -29,22 +29,22 @@ jobs:
 
       # 3. 依存パッケージをインストールする
       - name: Install Dependencies
-        working-directory: frontend/app
+        working-directory: frontend
         run: npm install
 
       # 4. Lint（コード静的解析）を実行する
       - name: Run Lint
-        working-directory: frontend/app
+        working-directory: frontend
         run: npm run lint
 
       # 5. テストを実行する
       - name: Run Tests
-        working-directory: frontend/app
+        working-directory: frontend
         run: npm run test
 
       # 6. ビルドが成功するか確認する
       - name: Build Project
-        working-directory: frontend/app
+        working-directory: frontend
         run: npm run build
 
   # バックエンド用のジョブ
