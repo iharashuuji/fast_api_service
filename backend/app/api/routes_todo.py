@@ -1,15 +1,20 @@
+# app/api/routes_todo.py
 """
 ルーター（routes_*.py）は 「特定の機能単位の API エンドポイント」
 をまとめたファイル
 """
-
-# app/api/routes_todo.py
 from fastapi import APIRouter, HTTPException, Depends
-from app.schemas.todo import TodoCreate, TodoOut
+from app.schemas.todo import TodoCreate, TodoOut, TodoUpdate
 from app.services.todo_service import TodoService
 from app.database import get_db
 from app.models.todo_model import TodoModel
+import logging
+from typing import List
+from sqlalchemy.orm import Session
 
+
+logger = logging.getLogger("uvicorn")  # uvicorn ログと統合される
+logger.setLevel(logging.DEBUG)
 
 router = APIRouter()
 todo_service = TodoService()
@@ -17,7 +22,6 @@ db = next(get_db())  # SQLAlchemy Session を取得
 
 # response_model は FastAPI がレスポンスの
 # 「型・構造」を明示するための仕組み です。
-from sqlalchemy.orm import Session
 
 @router.get("/", response_model=list[TodoOut])
 def get_todos(db: Session = Depends(get_db)):
@@ -31,16 +35,12 @@ def create_todo(todo: TodoCreate):
     return todo_service.create_todo(db, todo)
 
 @router.put("/{todo_id}", response_model=TodoOut)
-def update_todo(todo_id: int, todo: TodoCreate):
+def update_todo(todo_id: int, todo_update: TodoUpdate, db: Session = Depends(get_db)):
+    logger.info(f"Received update for Todo {todo_id}: {todo_update}")
     try:
-        return todo_service.update_todo(todo_id, todo)
+        return todo_service.update_todo(db, todo_id, todo_update)
     except ValueError:
         raise HTTPException(status_code=404, detail="Todo not found")
-
-# @router.delete("/{todo_id}")
-# def delete_todo(todo_id: int):
-#     success = todo_service.delete_todo(todo_id)
-#     return {"deleted": success}
 
 @router.delete("/{id}")
 def delete_todo(id: int):

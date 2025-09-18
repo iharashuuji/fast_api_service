@@ -16,11 +16,32 @@ LLMに推論をさせて、スケジュールの最適化を行う
 
 
 # app/services/todo_service.py
+from langchain import LLMChain, PromptTemplate
 from fastapi import FastAPI
 from typing import List
 from app.schemas.todo import TodoCreate, TodoOut
 from app.schemas.schedule import ScheduleCreate, ScheduleOut
-from app.services.todo_service import fake_db as todo_db
+from sqlalchemy.orm import Session
+from app.models.todo_model import TodoModel
+
 
 
 # LLMのプロンプトをだして、DBから取得したデータを渡す。
+class ScheduleService:
+    def optimize_schedule(self, db: Session, date: str):
+        # DBからタスクを取得
+        tasks = db.query(TodoModel).all()
+        # LLM に渡すデータを整形
+        task_list = [{"title": t.title, "time_limit": t.time_limit, "description": t.description, "done": t.done} for t in tasks]
+
+        # LLM プロンプト
+        prompt_text = f"""
+        今日の日付は {date} です。
+        以下のタスクから今日やるべきものを優先順に JSON 形式で返してください:
+        {task_list}
+        """
+
+        # LLM で処理
+        result = my_llm_instance.run(prompt_text)
+        # JSONにパースして返す
+        return json.loads(result)

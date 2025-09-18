@@ -6,8 +6,9 @@ export type Todo = {
   id: number;
   title: string;
   done: boolean;
-  time_limit: Date;
+  time_limit: string;
   estimated_minutes: number;
+  priority: number;
 };
 
 const BASE_URL = "http://localhost:8000/api/todo";
@@ -17,20 +18,7 @@ export const fetchTodos = async (): Promise<Todo[]> => {
   return res.json();
 };
 
-// export const createTodo = async (
-//   title: string,
-//   // description: string,
-//   // done: boolean,
-//   time_limit: string,
-//   estimated_minutes: number
-// ): Promise<Todo> => {
-//   const res = await fetch(BASE_URL, {
-//     method: "POST",
-//     headers: { "Content-Type": "application/json" },
-//     body: JSON.stringify({ title, time_limit, estimated_minutes }),
-//   });
-//   return res.json();
-// };
+
 export const createTodo = async (
   title: string,
   time_limit: string,
@@ -60,4 +48,16 @@ export const deleteTodo = async (id: number) => {
   await fetch(`${BASE_URL}/${id}`, {
     method: "DELETE",
   });
+}
+
+export const updateTodo = async (
+  id: number, 
+  updates: Partial<Todo>
+) => {
+  const res = await fetch(`${BASE_URL}/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  });
+  return res.json();
 }
