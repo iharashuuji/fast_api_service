@@ -4,7 +4,7 @@ name: CI Pipeline
 # ワークフローが実行されるきっかけ（トリガー）
 on:
   push:
-    branches: [ main ] # mainブランチにプッシュされた時
+    branches: [ develop ] # developブランチにプッシュされた時
   pull_request:
     branches: [ main ] # mainブランチへのプルリクエストが作成された時
 
