@@ -13,3 +13,4 @@ class TodoModel(Base):
     done = Column(Boolean, default=False)
     time_limit = Column(DateTime, nullable=True)
     estimated_minutes = Column(Integer, nullable=True)
+    priority = Column(Integer, nullable=True)

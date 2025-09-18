@@ -32,34 +32,54 @@ export default function TodoList({ todos, setTodos, onEdit }: Props) {
   }, [result]);
 
 const handleClick = async () => {
-  const today = new Date().toISOString().split("T")[0];
-  const res = await fetch("http://localhost:8000/optimize_schedule", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ date: today }),
-  });
-  const optimizedTodos = await res.json();
-  console.log("APIから返ってきた値:", optimizedTodos); // 👈 ここで確認
-  setTodos(optimizedTodos);
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const res = await fetch("http://localhost:8000/api/schedule/optimize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: today }),
+    });
+    const data = await res.json();
+    console.log("APIから返ってきた値:", data); // デバッグ用
+
+    // データが配列でない場合の処理
+    if (!Array.isArray(data)) {
+      console.error("APIレスポンスが配列ではありません:", data);
+      return;
+    }
+
+    // 各要素がTodo型を満たしているか確認
+    const validTodos = data.filter(item => 
+      typeof item === 'object' && 
+      item !== null &&
+      'id' in item &&
+      'title' in item
+    );
+
+    if (validTodos.length === 0) {
+      console.error("有効なTodoデータがありません");
+      return;
+    }
+
+    setTodos(validTodos);
+  } catch (error) {
+    console.error("スケジュール最適化中にエラーが発生しました:", error);
+  }
 };
   return (
     <div>
-    <ul>
-      {todos.map((todo) => (
-        <div key={todo.id}>
+      <ul>
+        {todos.map((todo) => (
           <li key={todo.id}>
-            {todo.title} / {todo.time_limit} / {todo.estimated_minutes}分 {todo.done ? "(完了)" : ""}
+            {todo.title} / {todo.time_limit ? new Date(todo.time_limit).toLocaleString() : '期限なし'} / {todo.estimated_minutes}分 {todo.done ? "(完了)" : ""}
             <button onClick={() => handleUpdate(todo.id, { done: !todo.done })}>{todo.done ? "未完了" : "完了"}</button>
             <button onClick={() => handleDelete(todo.id)}>削除</button>
             <button onClick={() => onEdit(todo)}>編集</button>
           </li>
-        </div>
-      ))}
-    </ul>
-    <button onClick={handleClick}>スケジュール最適化</button>
+        ))}
+      </ul>
+      <button onClick={handleClick}>スケジュール最適化</button>
     </div>
   );
 }
-
-
 
