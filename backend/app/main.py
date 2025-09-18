@@ -12,11 +12,7 @@ app.include_router(schedule_router, prefix="/api/schedule", tags=["Schedule"])
 from app.database import engine, Base  # ← 追加
 
 Base.metadata.create_all(bind=engine)
-
-
-
-
-
+# CORS設定　Next.jsと通信をする為のもの
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],  # フロントエンドのURL
