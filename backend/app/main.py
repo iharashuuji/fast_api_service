@@ -14,6 +14,9 @@ from app.database import engine, Base  # ← 追加
 Base.metadata.create_all(bind=engine)
 
 
+
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],  # フロントエンドのURL
