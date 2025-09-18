@@ -6,13 +6,10 @@ from app.database import get_db
 from typing import List
 from sqlalchemy.orm import Session
 from datetime import datetime
-
 from pydantic import BaseModel
-
 
 router = APIRouter()
 todo_service = TodoService()
-
 
 class OptimizeRequest(BaseModel):
     date: str
