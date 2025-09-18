@@ -1,5 +1,5 @@
 # ワークフローの名前
-name: CI Pipeline
+name: CI PIPELINE
 
 # ワークフローが実行されるきっかけ（トリガー）
 on:
