@@ -11,8 +11,13 @@ from datetime import datetime
 router = APIRouter()
 todo_service = TodoService()
 
+from pydantic import BaseModel
+
+class OptimizeRequest(BaseModel):
+    date: str
+
 @router.post("/optimize", response_model=List[TodoOut])
-async def optimize_schedule(date: dict, db: Session = Depends(get_db)):
+async def optimize_schedule(request: OptimizeRequest, db: Session = Depends(get_db)):
     try:
         # 未完了のTodoを取得
         todos = todo_service.get_all_todos(db)
@@ -20,9 +25,21 @@ async def optimize_schedule(date: dict, db: Session = Depends(get_db)):
         
         # ここで最適化ロジックを実装
         # とりあえず期限順にソート
-        sorted_todos = sorted(incomplete_todos, key=lambda x: x.time_limit if x.time_limit else datetime.max)
+        sorted_todos = sorted(
+            incomplete_todos, 
+            key=lambda x: x.time_limit if x.time_limit else datetime.max
+        )
         
-        return sorted_todos
+        # TodoOutの形式に変換して返す
+        return [
+            TodoOut(
+                id=todo.id,
+                title=todo.title,
+                done=todo.done,
+                time_limit=todo.time_limit,
+                estimated_minutes=todo.estimated_minutes
+            ) for todo in sorted_todos
+        ]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
