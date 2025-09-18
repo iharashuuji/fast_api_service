@@ -12,3 +12,6 @@ langchain
 sqlalchemy-utils
 langchain
 langchain-google-genai
+flake8
+black
+pytest
