@@ -6,4 +6,4 @@ fast_api_portfoilo/backend/__pycache__/*
 memo.txt
 keys/gen-lang-client-0738370520-45d672cb2326.json
 keys/*
-backend/app/keys/*
+backend/app/keys/*backend/keys/*.json
