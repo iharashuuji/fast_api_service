@@ -1,5 +1,5 @@
-from app.services.todo_service import TodoService
-from app.schemas.todo import TodoCreate
+from backend.app.services.todo_service import TodoService
+from backend.app.schemas.todo import TodoCreate
 
 
 def test_create_todo():
