@@ -32,48 +32,11 @@ load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
 llm = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0)
 my_llm_instance = LLMChain(
-    llm=llm, prompt=PromptTemplate(input_variables=["text"], template="{text}")
+    llm=llm, 
+    prompt=PromptTemplate(
+        input_variables=["text"], 
+        template="{text}")
 )
-
-
-# LLMのプロンプトをだして、DBから取得したデータを渡す。
-# class ScheduleService:
-#     def optimize_schedule(self, db: Session, date: str):
-#         # DBからタスクを取得
-#         tasks = db.query(TodoModel).all()
-#         task_list = [
-            {
-                "id": t.id,
-                "title": t.title,
-                "done": t.done,
-                "priority": t.priority,
-                "estimated": t.estimated_minutes,
-                "time": t.time_limit
-            }
-            for t in tasks
-        ]
-
-#         # DBのDoneカラムがFalseであるものだけを返すように処理をする
-#         if task_list['done'] is True:
-#             task_list.remove(task_list['done'])
-#         else:
-#             pass
-#         # LLMに渡す
-#         prompt_text = f"""
-#         今日の日付は {date} です。
-#         以下のタスクを優先度順に JSON 形式で返してください:
-#         {task_list}
-#         """
-#         result = my_llm_instance.run(prompt_text)
-#         optimized_tasks = json.loads(result)
-
-#         # 優先度カラムに反映
-#         for idx, task_info in enumerate(optimized_tasks):
-#             todo = db.query(TodoModel).filter(TodoModel.id == task_info["id"]).first()
-#             if todo:
-#                 todo.priority = idx
-#         db.commit()
-#         return optimized_tasks
 
 
 class ScheduleService:

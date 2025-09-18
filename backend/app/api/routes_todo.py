@@ -45,7 +45,11 @@ def create_todo(todo: TodoCreate):
 
 
 @router.put("/{todo_id}", response_model=TodoOut)
-def update_todo(todo_id: int, todo_update: TodoUpdate, db: Session = Depends(get_db)):
+def update_todo(
+    todo_id: int, 
+    todo_update: TodoUpdate, 
+    db: Session = Depends(get_db)):
+    
     logger.info(f"Received update for Todo {todo_id}: {todo_update}")
     try:
         return todo_service.update_todo(db, todo_id, todo_update)
@@ -53,12 +57,6 @@ def update_todo(todo_id: int, todo_update: TodoUpdate, db: Session = Depends(get
         raise HTTPException(status_code=404, detail="Todo not found")
 
 
-# @router.delete("/{id}")
-# def delete_todo(id: int):
-#     todo = db.query(TodoModel).filter(TodoModel.id == id).first()
-#     db.delete(todo)
-#     db.commit()
-#     return {"deleted": True, "message": "Todo deleted successfully", "id": id}
 @router.delete("/{id}")
 def delete_todo(id: int, db: Session = Depends(get_db)):
     success = todo_service.delete_todo(db, id)  # DB処理はサービスに丸投げ

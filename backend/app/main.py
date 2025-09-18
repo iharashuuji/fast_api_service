@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes_todo import router as todo_router
 from app.api.routes_schedule import router as schedule_router
+from app.database import engine, Base  # ← 追加
 
 app = FastAPI()
 
@@ -17,7 +18,6 @@ app.add_middleware(
 app.include_router(todo_router, prefix="/api/todo", tags=["Todo"])
 app.include_router(schedule_router, prefix="/api/schedule", tags=["Schedule"])
 
-from app.database import engine, Base  # ← 追加
 
 Base.metadata.create_all(bind=engine)
 # CORS設定　Next.jsと通信をする為のもの
