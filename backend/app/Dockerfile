@@ -33,7 +33,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY ./keys /app/keys
 
 # 環境変数でパスを指定
-ENV GOOGLE_APPLICATION_CREDENTIALS=/home/hiroto/gen-lang-client-0738370520-45d672cb2326.json
+ENV GOOGLE_APPLICATION_CREDENTIALS=/app/keys/gen-lang-client-0738370520-45d672cb2326.json
 
 # アプリケーションコピー
 COPY ./app ./app
