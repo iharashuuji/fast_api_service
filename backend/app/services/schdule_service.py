@@ -41,7 +41,9 @@ my_llm_instance = LLMChain(
 
 class ScheduleService:
     def optimize_schedule(self, db: Session, date: str):
-        tasks = db.query(TodoModel).filter(TodoModel.done == False).all()
+        # tasks = db.query(TodoModel).filter(TodoModel.done == False).all()
+        tasks = db.query(TodoModel).filter(TodoModel.done.is_(False)).all()
+
         task_list = [
             {
                 "id": t.id,

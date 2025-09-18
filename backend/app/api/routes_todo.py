@@ -46,9 +46,9 @@ def create_todo(todo: TodoCreate):
 
 @router.put("/{todo_id}", response_model=TodoOut)
 def update_todo(
-    todo_id: int, 
-    todo_update: TodoUpdate, 
-    db: Session = Depends(get_db)):
+        todo_id: int, 
+        todo_update: TodoUpdate, 
+        db: Session = Depends(get_db)):
     
     logger.info(f"Received update for Todo {todo_id}: {todo_update}")
     try:

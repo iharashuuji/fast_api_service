@@ -11,6 +11,7 @@ from pydantic import BaseModel
 router = APIRouter()
 todo_service = TodoService()
 
+
 class OptimizeRequest(BaseModel):
     date: str
 
@@ -18,7 +19,7 @@ class OptimizeRequest(BaseModel):
 @router.post("/optimize", response_model=List[TodoOut])
 async def optimize_schedule(
     request: OptimizeRequest, 
-    db: Session = Depends(get_db)):
+        db: Session = Depends(get_db)):
     try:
         # 未完了のTodoを取得
         todos = todo_service.get_all_todos(db)
