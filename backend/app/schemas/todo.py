@@ -18,13 +18,16 @@ class TodoCreate(BaseModel):
     done: bool = False
     time_limit: Optional[datetime] = None
     estimated_minutes: Optional[int] = None
+    priority: Optional[int] = None
 
 class TodoOut(TodoCreate):
     id: int  # DB に保存された ID を含める
-
+    
+    
 class TodoUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     done: Optional[bool] = None
     time_limit: Optional[datetime] = None
     estimated_minutes: Optional[int] = None
+    priority: Optional[int] = None
