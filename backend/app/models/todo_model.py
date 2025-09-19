@@ -1,8 +1,6 @@
 # backend/app/models/todo_model.py
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
-from sqlalchemy.ext.declarative import declarative_base
 from app.database import Base
-from datetime import datetime
 
 
 class TodoModel(Base):

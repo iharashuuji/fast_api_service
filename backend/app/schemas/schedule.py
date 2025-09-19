@@ -8,14 +8,11 @@ Pydantic モデル」をまとめるフォルダ
 
 # app/schemas/todo.py
 from pydantic import BaseModel
-from typing import Optional
-from datetime import datetime
-
 
 
 class ScheduleCreate(BaseModel):
     title: str
 
+
 class ScheduleOut(ScheduleCreate):
     id: int  # DB に保存された ID を含める
-    

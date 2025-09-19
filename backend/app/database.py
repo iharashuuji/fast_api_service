@@ -22,11 +22,12 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # モデルはこの Base を継承して定義
 Base = declarative_base()
 
+
 # 5. DBセッションを取得するユーティリティ関数
 # FastAPI の Depends で使用する
 def get_db() -> Session:
     db = SessionLocal()  # セッション作成
     try:
-        yield db         # yield で generator にすることで、依存注入可能
+        yield db  # yield で generator にすることで、依存注入可能
     finally:
-        db.close()       # リクエスト後に必ずクローズ
+        db.close()  # リクエスト後に必ずクローズ

@@ -1,14 +1,20 @@
 from sqlalchemy.orm import Session
 from typing import List
 from app.models.todo_model import TodoModel
-from app.schemas.todo import TodoCreate, TodoOut
+from app.schemas.todo import TodoCreate
+
 
 class TodoService:
     def get_all_todos(self, db: Session) -> List[TodoModel]:
         return db.query(TodoModel).all()
 
     def create_todo(self, db: Session, todo: TodoCreate) -> TodoModel:
-        db_todo = TodoModel(title=todo.title, time_limit=todo.time_limit, estimated_minutes=todo.estimated_minutes, done=False)
+        db_todo = TodoModel(
+            title=todo.title,
+            time_limit=todo.time_limit,
+            estimated_minutes=todo.estimated_minutes,
+            done=False,
+        )
         db.add(db_todo)
         db.commit()
         db.refresh(db_todo)
