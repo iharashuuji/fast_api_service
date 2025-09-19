@@ -77,3 +77,4 @@ jobs:
       # 5. テストを実行する
       - name: Run Tests
         run: pytest # pytestを使う場合の例
+        working-directory: ./backend
