@@ -46,8 +46,11 @@ const handleClick = async () => {
 };
 const handleTaskClick = async (taskId: number) => {
   // バックエンドのAPIを呼び出す
-  const response = await fetch(`/api/tasks/${taskId}/related_file`); // APIのURLは適宜調整
+  console.log('呼び出し開始')
+  console.log(`/api/schedule/${taskId}/related_file`)
+  const response = await fetch(`http://localhost:8000/api/schedule/${taskId}/related_file`); // APIのURLは適宜調整
   const data = await response.json();
+  console.log('呼び出し完了', data);
 
   if (data.content) {
     // 取得したファイルの中身をモーダルなどで表示する

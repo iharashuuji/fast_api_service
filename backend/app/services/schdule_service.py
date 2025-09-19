@@ -34,7 +34,7 @@ load_dotenv()
 # 環境変数から取得
 SEARCH_DIR = os.getenv("SEARCH_DIR")  # ここを適切なディレクトリに変更
 api_key = os.getenv("GOOGLE_API_KEY")
-llm = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0)
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite", temperature=0)
 my_llm_instance = LLMChain(
     llm=llm, 
     prompt=PromptTemplate(
@@ -103,7 +103,8 @@ class ScheduleService:
             return None # タスクが見つからない場合
 
         # 2. 検索対象のファイルリストを取得
-        files = [os.path.join(root, f) for root, _, fs in os.walk("./docs") for f in fs]
+        files = [os.path.join(root, f) for root, _, fs in os.walk(SEARCH_DIR) for f in fs]
+        print('files:', files)
         filenames = [os.path.basename(f) for f in files]
 
         # 3. LLMにファイルを選ばせる (プロンプトを改善)
@@ -115,8 +116,8 @@ class ScheduleService:
         ファイルリスト: {filenames}
         """
         # 4. LLMを一度だけ実行
-        selected_filename = llm.run(prompt).strip()
-
+        response = llm.invoke(prompt)
+        selected_filename = response.content.strip()
         # 5. 選ばれたファイルを探して中身を読み込む (より頑健な方法)
         for file_path in files:
             if selected_filename in file_path:

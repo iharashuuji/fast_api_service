@@ -19,10 +19,9 @@ todo_service = TodoService()
 class OptimizeRequest(BaseModel):
     date: str
     
-llm = None  # ここにLLMの初期化コードを入れる
 
 
-@router.get("/tasks/{task_id}/related_file")
+@router.get("/{task_id}/related_file")
 def get_related_file(task_id: int, db: Session = Depends(get_db)):
     file_data = ScheduleService.find_related_file_for_task(task_id, db)
     if not file_data:

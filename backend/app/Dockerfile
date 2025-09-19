@@ -37,6 +37,6 @@ ENV GOOGLE_APPLICATION_CREDENTIALS=/app/keys/gen-lang-client-0738370520-45d672cb
 
 # アプリケーションコピー
 # ただここは開発の際には不要である。コードの変更が反映されない事がある為。
-# COPY ./app ./app
+COPY ./app ./app
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
