@@ -9,7 +9,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
-      - ./backend/keys:/app/keys:ro  # ここを追加
+      - ./backend/keys:/app/keys:ro 
     environment:
       - DATABASE_URL=sqlite:///./db.sqlite3
     networks:

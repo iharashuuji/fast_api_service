@@ -1,0 +1,26 @@
+/* app/page.module.css */
+
+.container {
+  /* コンテンツエリアの最大幅を設定し、それ以上は広がらないようにする */
+  max-width: 800px;
+  
+  /* 左右の余白をautoにすることで、画面の中央に配置する */
+  margin: 0 auto;
+  
+  /* 内側の余白を上下に32px、左右に24px設定 */
+  padding: 32px 24px;
+}
+
+.title {
+  /* 文字のサイズを大きくする */
+  font-size: 2.5rem; /* 40px相当 */
+  
+  /* 文字の色を濃いグレーに */
+  color: #333;
+  
+  /* 文字を中央揃えにする */
+  text-align: center;
+
+  /* 下側の余白を32px設定 */
+  margin-bottom: 32px;
+}

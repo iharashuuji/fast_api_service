@@ -22,13 +22,17 @@ import json
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains import LLMChain
 from langchain_core.prompts import PromptTemplate
-
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
+import os
 from dotenv import load_dotenv
 
 # .env ファイルをロード
 load_dotenv()
 
+
 # 環境変数から取得
+SEARCH_DIR = os.getenv("SEARCH_DIR")  # ここを適切なディレクトリに変更
 api_key = os.getenv("GOOGLE_API_KEY")
 llm = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0)
 my_llm_instance = LLMChain(
@@ -86,3 +90,39 @@ class ScheduleService:
             )
             for task in optimized_tasks
         ]
+
+
+   
+    def find_related_file_for_task(task_id: int, db: Session):
+        """
+        指定されたタスクIDに関連するファイルをAIが探し、そのパスと中身を返すエージェント関数
+        """
+        # 1. 特定のタスクをデータベースから取得
+        task = db.query(TodoModel).filter(TodoModel.id == task_id).first()
+        if not task:
+            return None # タスクが見つからない場合
+
+        # 2. 検索対象のファイルリストを取得
+        files = [os.path.join(root, f) for root, _, fs in os.walk("./docs") for f in fs]
+        filenames = [os.path.basename(f) for f in files]
+
+        # 3. LLMにファイルを選ばせる (プロンプトを改善)
+        prompt = f"""
+        以下のファイルリストの中から、
+        タスク「{task.title}」（詳細：{task.description}）
+        に最も関連するファイル名を一つだけ選んで、ファイル名だけを答えてください。
+
+        ファイルリスト: {filenames}
+        """
+        # 4. LLMを一度だけ実行
+        selected_filename = llm.run(prompt).strip()
+
+        # 5. 選ばれたファイルを探して中身を読み込む (より頑健な方法)
+        for file_path in files:
+            if selected_filename in file_path:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                # 6. ファイルのパスと中身を辞書で返す
+                return {"path": file_path, "content": content}
+
+        return None # 関連ファイルが見つからない場合

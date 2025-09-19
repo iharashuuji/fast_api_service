@@ -7,6 +7,10 @@ from typing import List
 from sqlalchemy.orm import Session
 from datetime import datetime
 from pydantic import BaseModel
+import os
+from fastapi.responses import FileResponse
+from app.services.schdule_service import ScheduleService
+
 
 router = APIRouter()
 todo_service = TodoService()
@@ -14,6 +18,16 @@ todo_service = TodoService()
 
 class OptimizeRequest(BaseModel):
     date: str
+    
+llm = None  # ここにLLMの初期化コードを入れる
+
+
+@router.get("/tasks/{task_id}/related_file")
+def get_related_file(task_id: int, db: Session = Depends(get_db)):
+    file_data = ScheduleService.find_related_file_for_task(task_id, db)
+    if not file_data:
+        return {"error": "関連ファイルが見つかりませんでした。"}
+    return file_data
 
 
 @router.post("/optimize", response_model=List[TodoOut])

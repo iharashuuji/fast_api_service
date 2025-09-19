@@ -2,6 +2,8 @@
 "use client";
 
 import { useState } from "react";
+import styles from './EditTodo.module.css'; // CSSモジュールをインポート
+
 
 type Props = {
   onAdd: (title: string, time_limit: string, estimated_minutes: number) => void;
@@ -28,20 +30,25 @@ export default function TodoForm({ onAdd }: Props) {
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="新しい Todo"
+        className={styles.input}
       />
       <input
         type="datetime-local"
         value={timeLimit}
         onChange={(e) => setTimeLimit(e.target.value)}
         placeholder="期限"
+        className={styles.input}
       />
       <input
         type="number"
         value={estimatedMinutes}
         onChange={(e) => setEstimatedMinutes(Number(e.target.value))}
         placeholder="所要時間 (分)"
+        className={styles.input}
       />
-      <button type="submit">追加</button>
+      <button type="submit"
+        className={`${styles.button} ${styles.buttonPrimary}`}
+      >追加</button>
     </form>
   );
 }

@@ -67,3 +67,12 @@ def delete_todo(id: int, db: Session = Depends(get_db)):
         "message": "Todo deleted successfully",
         "id": id
     }
+
+
+@router.get("/file")
+def get_file(query: str):
+    file_path = search_file(query)
+    if not file_path:
+        raise HTTPException(status_code=404, detail="File not found")
+    # ファイルそのものを返す
+    return FileResponse(path=file_path, filename=os.path.basename(file_path))

@@ -1,0 +1,30 @@
+
+/* 全ボタン共通のスタイル */
+.button {
+  padding: 10px 16px;
+  border: 1px solid transparent; /* 枠線を透明に */
+  border-radius: 6px; /* 角の丸みを少し変更 */
+  cursor: pointer;
+  font-weight: 600; /* 少し太字に */
+  font-size: 14px; /* フォントサイズを少し小さく */
+  transition: all 0.2s ease; /* ホバー時のアニメーションを滑らかに */
+}
+
+/* components/TodoList.module.css */
+
+.listItem {
+  background-color: #ffffff;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ▼▼▼ このクラスを追加 ▼▼▼ */
+.completed {
+  color: #888; /* 文字色を灰色に */
+  text-decoration: line-through; /* 取り消し線を引く */
+}

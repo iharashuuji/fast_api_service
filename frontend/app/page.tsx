@@ -6,6 +6,7 @@ import { fetchTodos, createTodo, updateTodo, Todo } from "./api/todoApi";
 import TodoForm from "./components/TodoForm";
 import TodoList from "./components/TodoList";
 import EditTodo from "./components/EditTodo";
+import styles from './page.module.css'; 
 
 
 export default function Home() {
@@ -34,8 +35,8 @@ export default function Home() {
   }, []);
 
   return (
-    <div>
-      <h1>Todo アプリ（FastAPI + Next.js）</h1>
+    <div className={styles.container}>
+      <h1 className={styles.title}>Todo アプリ</h1>
       <TodoForm onAdd={addTodo} />
       <TodoList todos={todos} setTodos={setTodos} onEdit={setEditingTodo} />
     {/* ここに条件付きでモーダル表示 */}
