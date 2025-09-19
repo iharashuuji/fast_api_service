@@ -10,7 +10,6 @@ from app.services.schdule_service import ScheduleService
 from app.database import get_db
 import logging
 from sqlalchemy.orm import Session
-from app.services.schdule_service import search_file
 
 
 logger = logging.getLogger("uvicorn")  # uvicorn ログと統合される
