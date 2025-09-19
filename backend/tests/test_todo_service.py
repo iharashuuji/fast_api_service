@@ -1,10 +1,5 @@
 from app.services.todo_service import TodoService
 from app.schemas.todo import TodoCreate
-import sys
-from pathlib import Path
-
-# プロジェクトルートを PYTHONPATH に追加
-sys.path.append(str(Path(__file__).resolve().parent.parent.parent / "backend"))
 
 
 def test_create_todo():
