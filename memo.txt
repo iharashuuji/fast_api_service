@@ -1,2 +1,18 @@
 Node.jsでサーバーで立ち上げる。
 lmstudio server start --model ~/models/gemma-3-1b --port 1234 --api-key lm-studio
+
+./backend/app/api/routes_schedule.py:10:1: F401 'os' imported but unused
+./backend/app/api/routes_schedule.py:11:1: F401 'fastapi.responses.FileResponse' imported but unused
+./backend/app/api/routes_schedule.py:24:1: E303 too many blank lines (3)
+./backend/app/api/routes_todo.py:74:17: F821 undefined name 'search_file'
+./backend/app/api/routes_todo.py:78:12: F821 undefined name 'FileResponse'
+./backend/app/api/routes_todo.py:78:50: F821 undefined name 'os'
+./backend/app/api/routes_todo.py:78:78: W292 no newline at end of file
+./backend/app/services/schdule_service.py:25:1: F401 'fastapi.FastAPI' imported but unused
+./backend/app/services/schdule_service.py:25:1: F401 'fastapi.HTTPException' imported but unused
+./backend/app/services/schdule_service.py:26:1: F401 'fastapi.responses.FileResponse' imported but unused
+./backend/app/services/schdule_service.py:27:1: F811 redefinition of unused 'os' from line 20
+./backend/app/services/schdule_service.py:96:5: E303 too many blank lines (3)
+./backend/app/services/schdule_service.py:103:24: E261 at least two spaces before inline comment
+./backend/app/services/schdule_service.py:129:20: E261 at least two spaces before inline comment
+./backend/app/services/schdule_service.py:129:38: W292 no newline at end of file

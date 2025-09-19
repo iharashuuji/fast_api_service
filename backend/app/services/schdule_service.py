@@ -22,8 +22,6 @@ import json
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains import LLMChain
 from langchain_core.prompts import PromptTemplate
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
 import os
 from dotenv import load_dotenv
 

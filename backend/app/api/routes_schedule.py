@@ -7,19 +7,12 @@ from typing import List
 from sqlalchemy.orm import Session
 from datetime import datetime
 from pydantic import BaseModel
-import os
-from fastapi.responses import FileResponse
 from app.services.schdule_service import ScheduleService
-
-
 router = APIRouter()
 todo_service = TodoService()
-
-
 class OptimizeRequest(BaseModel):
     date: str
     
-
 
 @router.get("/{task_id}/related_file")
 def get_related_file(task_id: int, db: Session = Depends(get_db)):

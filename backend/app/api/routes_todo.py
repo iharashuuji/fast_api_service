@@ -10,6 +10,7 @@ from app.services.schdule_service import ScheduleService
 from app.database import get_db
 import logging
 from sqlalchemy.orm import Session
+from app.services.schdule_service import search_file
 
 
 logger = logging.getLogger("uvicorn")  # uvicorn ログと統合される
@@ -67,12 +68,3 @@ def delete_todo(id: int, db: Session = Depends(get_db)):
         "message": "Todo deleted successfully",
         "id": id
     }
-
-
-@router.get("/file")
-def get_file(query: str):
-    file_path = search_file(query)
-    if not file_path:
-        raise HTTPException(status_code=404, detail="File not found")
-    # ファイルそのものを返す
-    return FileResponse(path=file_path, filename=os.path.basename(file_path))
