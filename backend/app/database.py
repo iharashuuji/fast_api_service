@@ -42,9 +42,4 @@ client = Client(Settings(persist_directory="vector_db_data"))
 # 2. ベクトルデータベースのクライアントを取得するユーティリティ関数
 def get_vector_db() -> Client:
     # ChromaDBのセッション(クライアント)を生成
-    try:
-        yield client # yieldでクライアントを返す
-    finally:
-        # FastAPIのリクエスト後に自動でクローズ
-        # client.close() # ChromaDBは特別なcloseが不要
-        pass
+    return client

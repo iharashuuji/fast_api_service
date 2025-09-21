@@ -13,3 +13,5 @@ class TodoModel(Base):
     estimated_minutes = Column(Integer, nullable=True)
     priority = Column(Integer, nullable=True)
     description = Column(String, nullable=True)
+    is_vectorized = Column(Boolean, default=False, nullable=False)
+    suggestion_reason = Column(String, nullable=True) 

@@ -28,6 +28,7 @@ class TodoService:
         for key, value in update_data.items():
             setattr(db_todo, key, value)
         # Alternatively, you can update specific fields like this:
+        db_todo.is_vectorized = False
         db.commit()
         db.refresh(db_todo)
         return db_todo
