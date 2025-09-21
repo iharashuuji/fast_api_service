@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import styles from './EditTodo.module.css'; // CSSモジュールをインポート
+import styles from './EditTodo.module.css';// CSSモジュールをインポート
 
 
 type Props = {

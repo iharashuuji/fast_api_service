@@ -70,11 +70,11 @@ const handleTaskClick = async (taskId: number) => {
             <button onClick={() => handleUpdate(todo.id, { done: !todo.done })} className={`${styles.button}`}>{todo.done ? "未完了" : "完了"}</button>
             <button onClick={() => handleDelete(todo.id)} className={`${styles.button}`}>削除</button>
             <button onClick={() => onEdit(todo)} className={`${styles.button}`}>編集</button>
-            <button onClick={() => handleTaskClick(todo.id)}>関連ファイルを表示</button>
+            <button onClick={() => handleTaskClick(todo.id)} className={`${styles.button}`}>関連ファイルを表示</button>
           </li>
         ))}
       </ul>
-      <button onClick={handleClick}>スケジュール最適化</button>
+      <button onClick={handleClick} className={`${styles.button}`}>スケジュール最適化</button>
     </div>
   );
 }

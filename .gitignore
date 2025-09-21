@@ -10,3 +10,4 @@ backend/app/keys/*backend/keys/*.json
 repo-backup.git/*
 backend/keys/*
 frontend/.next/*
+test.py

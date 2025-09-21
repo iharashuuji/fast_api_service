@@ -3,6 +3,8 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.ext.declarative import declarative_base
+from chromadb import Client, Settings
+
 
 # 1. データベースURLの設定
 # SQLiteの場合、ファイルは backend/app/db.sqlite3 に作られる
@@ -31,3 +33,18 @@ def get_db() -> Session:
         yield db  # yield で generator にすることで、依存注入可能
     finally:
         db.close()  # リクエスト後に必ずクローズ
+
+
+# 1. ベクトルデータベースのクライアントを初期化
+# persist_directoryは、ローカルDBの保存先
+client = Client(Settings(persist_directory="vector_db_data"))
+
+# 2. ベクトルデータベースのクライアントを取得するユーティリティ関数
+def get_vector_db() -> Client:
+    # ChromaDBのセッション(クライアント)を生成
+    try:
+        yield client # yieldでクライアントを返す
+    finally:
+        # FastAPIのリクエスト後に自動でクローズ
+        # client.close() # ChromaDBは特別なcloseが不要
+        pass

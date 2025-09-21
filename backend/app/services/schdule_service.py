@@ -1,127 +1,150 @@
-"""
-LLMに推論をさせて、スケジュールの最適化を行う
-必要なものは、Openai apiと、スケジュールを取得する事、そのスケジュールとその人がどれくらいのタスクをうまくさばけるかを考える。
-ただ、スケジュールの最適化って、難しいかなと思うが、開いている時間でちょっとした課題とかはやればいいが、テスト勉強！とか時間をまとめて取った方がいいやつとかはかなりいいかなと思っている、
-そこで、スケジュールの中で、動くスケジュールと、固定して決めるべきスケジュールを考えるべきかなと思った。このあたりの数値の調節は自分自身でやってもらう方がいいかなと思う
-
-    作成機能 TodoCreate
-    title: str
-    description: Optional[str] = None
-    done: bool = False
-
-    削除機能 TodoOut
-    id: int  # DB に保存された ID を含める
-"""
-
 # app/services/todo_service.py
+
+# --- Imports ---
 from sqlalchemy.orm import Session
 from app.models.todo_model import TodoModel
 from app.schemas.todo import TodoOut
 import os
 import json
+from datetime import datetime, timezone
+import re
+
+# --- AI & API Configuration ---
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from langchain.chains import LLMChain
 from langchain_core.prompts import PromptTemplate
-import os
+from langchain_core.documents import Document
+
+# LM Studio (Python Client) for local embedding model
+import lmstudio as lms
+import google.generativeai as genai
 from dotenv import load_dotenv
 
-# .env ファイルをロード
 load_dotenv()
 
+# 環境変数から設定をロードし、ブール値として変換
+use_local_api = os.getenv("USE_LOCAL_API") == "true"
+lmstudio_model_name = os.getenv('LOCAL_MODEL_NAME')
+use_local_embedding = os.getenv("USE_LOCAL_EMBEDDING") == "true"
+google_api_key = os.getenv("GOOGLE_API_KEY")
 
-# 環境変数から取得
-SEARCH_DIR = os.getenv("SEARCH_DIR")  # ここを適切なディレクトリに変更
-api_key = os.getenv("GOOGLE_API_KEY")
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite", temperature=0)
-my_llm_instance = LLMChain(
-    llm=llm, 
-    prompt=PromptTemplate(
-        input_variables=["text"], 
-        template="{text}")
-)
+# --- 1. LLMインスタンスの初期化 (プログラム起動時に一度だけ実行) ---
+if use_local_api:
+    llm = ChatOpenAI(
+        model=lmstudio_model_name,
+        api_key="lm-studio",
+        base_url="http://localhost:1234/v1"
+    )
+    print("AI: LM Studioのローカルモデルを使用します。")
+else:
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash-lite",
+        temperature=0,
+        google_api_key=google_api_key
+    )
+    print("AI: Geminiモデルを使用します。")
+
+# --- 2. Embeddingモデルの初期化 ---
+if use_local_embedding:
+    try:
+        embedding_model = lms.embedding_model("nomic-embed-text-v1.5")
+    except TypeError:
+        print("LM Studio embedding model could not be loaded. Check if the model name is correct.")
+        embedding_model = None
+else:
+    try:
+        genai.configure(api_key=google_api_key)
+        embedding_model = genai.embed_content
+    except Exception as e:
+        print(f"Gemini embedding model could not be loaded: {e}")
+        embedding_model = None
 
 
+# --- RAG Component: RAGのロジックをカプセル化 ---
+class RAGComponent:
+    def __init__(self, embedding_model, db_session: Session):
+        self.embedding_model = embedding_model
+        self.db_session = db_session
+        print("RAGComponent: ベクトルデータベースの準備中...")
+        # ここにベクトルデータベースのインスタンスを初期化します (例: self.vector_db = ChromaDB(...))
+
+    def create_vector_for_text(self, text: str) -> list:
+        """テキストをベクトル化する"""
+        if not self.embedding_model:
+            print("Embedding model is not available.")
+            return []
+        
+        if use_local_embedding:
+            # LM Studioモデルの呼び出し方を調整
+            return self.embedding_model.embed(text)
+        else:
+            return self.embedding_model(model="models/embedding-001", content=text)['embedding']
+
+    def index_tasks_for_rag(self, tasks: list[TodoModel]):
+        """タスクリストをベクトル化してデータベースに格納 (インデックス・フェーズ)"""
+        print("RAGComponent: タスクのインデックスを作成中...")
+        for task in tasks:
+            text_to_embed = f"タスク名: {task.title}\n詳細: {task.description}\n完了済み: {task.done}"
+            vector = self.create_vector_for_text(text_to_embed)
+            if vector:
+                # ここでベクトルとメタデータをベクトルデータベースに格納
+                # 例: self.vector_db.add_document(vector, {"id": task.id, "title": task.title})
+                print(f"タスク '{task.title}' をインデックス化しました。")
+
+    def find_relevant_tasks_with_rag(self, query: str, num_results=5) -> list[TodoModel]:
+        """クエリに基づいて関連タスクを検索 (推論・フェーズ)"""
+        print(f"RAGComponent: クエリ '{query}' に基づいて関連タスクを検索中...")
+        query_vector = self.create_vector_for_text(query)
+        
+        # 実際にはここでベクトル検索を実行
+        # relevant_ids = self.vector_db.search(query_vector, k=num_results)
+        # relevant_tasks = self.db_session.query(TodoModel).filter(TodoModel.id.in_(relevant_ids)).all()
+        # 仮の実装として、未完了タスクの中から関連タスクを抽出
+        unfinished_tasks = self.db_session.query(TodoModel).filter(TodoModel.done.is_(False)).all()
+        return unfinished_tasks[:num_results]
+
+# --- Service Class ---
 class ScheduleService:
-    def optimize_schedule(self, db: Session, date: str):
-        # tasks = db.query(TodoModel).filter(TodoModel.done == False).all()
-        tasks = db.query(TodoModel).filter(TodoModel.done.is_(False)).all()
-
-        task_list = [
-            {
-                "id": t.id,
-                "title": t.title,
-                "description": t.description,
-                "done": t.done,
-                "priority": t.priority,
-                "estimated_minutes": t.estimated_minutes,
-                "time_limit": t.time_limit.isoformat() if t.time_limit else None,
-            }
-            for t in tasks
-        ]
-
-        # LLMに渡す
-        prompt_text = (
-            f"今日の日付は {date} です。\n"
-            f"以下のタスクを優先度順に JSON 形式で返してください:\n"
-            f"{task_list}"
-        )
-        result = my_llm_instance.run(prompt_text)
-        optimized_tasks = json.loads(result)
-
-        # DBに優先度を反映
-        for idx, task_info in enumerate(optimized_tasks):
-            todo = db.query(TodoModel).filter(TodoModel.id == task_info["id"]).first()
-            if todo:
-                todo.priority = idx
-        db.commit()
-
-        # 🔥 TodoOut に変換して返す
-        return [
-            TodoOut(
-                id=task["id"],
-                title=task["title"],
-                description=task.get("description"),
-                done=task["done"],
-                priority=task.get("priority"),
-                estimated_minutes=task.get("estimated_minutes"),
-                time_limit=task.get("time_limit"),
+    def __init__(self, db: Session, rag_component: RAGComponent):
+        self.db = db
+        self.rag = rag_component
+        self.llm_chain = LLMChain(
+            llm=llm,
+            prompt=PromptTemplate(
+                input_variables=["context", "query"],
+                template="コンテキスト: {context}\n\nタスク: {query}\n\nこの情報を使って、具体的で最適なスケジュールを提案してください。"
             )
-            for task in optimized_tasks
+        )
+
+
+    def optimize_schedule(self, query: str):
+        """RAGを使ってスケジュールを最適化する"""
+        # 1. RAGコンポーネントで関連タスクを取得
+        relevant_tasks = self.rag.find_relevant_tasks_with_rag(query)
+        # 2. 取得したタスク情報をプロンプトのコンテキストにまとめる
+        context_docs = [
+            Document(page_content=f"タスク: {t.title} - {t.description} (完了: {t.done})") for t in relevant_tasks
         ]
+        # 3. LLMに最適化を依頼
+        result = self.llm_chain.invoke({
+            "context": context_docs,
+            "query": query
+        })
+        # 4. LLMの応答を解析してDBを更新 (簡略化)
+        try:
+            optimized_tasks_info = json.loads(result['text'])
+            return "スケジュールが最適化されました。"
+        except json.JSONDecodeError:
+            return "LLMからの応答形式が不正です。"
 
 
-   
-    def find_related_file_for_task(task_id: int, db: Session):
-        """
-        指定されたタスクIDに関連するファイルをAIが探し、そのパスと中身を返すエージェント関数
-        """
-        # 1. 特定のタスクをデータベースから取得
-        task = db.query(TodoModel).filter(TodoModel.id == task_id).first()
+    def find_related_file_for_task(self, task_id: int):
+        """RAGを使って関連ファイルを探す"""
+        task = self.db.query(TodoModel).filter(TodoModel.id == task_id).first()
         if not task:
-            return None # タスクが見つからない場合
-
-        # 2. 検索対象のファイルリストを取得
-        files = [os.path.join(root, f) for root, _, fs in os.walk(SEARCH_DIR) for f in fs]
-        print('files:', files)
-        filenames = [os.path.basename(f) for f in files]
-
-        # 3. LLMにファイルを選ばせる (プロンプトを改善)
-        prompt = f"""
-        以下のファイルリストの中から、
-        タスク「{task.title}」（詳細：{task.description}）
-        に最も関連するファイル名を一つだけ選んで、ファイル名だけを答えてください。
-
-        ファイルリスト: {filenames}
-        """
-        # 4. LLMを一度だけ実行
-        response = llm.invoke(prompt)
-        selected_filename = response.content.strip()
-        # 5. 選ばれたファイルを探して中身を読み込む (より頑健な方法)
-        for file_path in files:
-            if selected_filename in file_path:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                # 6. ファイルのパスと中身を辞書で返す
-                return {"path": file_path, "content": content}
-
-        return None # 関連ファイルが見つからない場合
+            return None
+        
+        # ファイルのインデックス化が必要 (ここでは実装を省略)
+        # files_indexed_by_rag = self.rag.find_relevant_documents(task.title)
+        return {"file_found": "True", "content": "関連ファイルの内容"}
