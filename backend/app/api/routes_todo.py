@@ -13,8 +13,6 @@ from sqlalchemy.orm import Session
 from chromadb import Client
 
 
-
-
 logger = logging.getLogger("uvicorn")  # uvicorn ログと統合される
 logger.setLevel(logging.DEBUG)
 
@@ -26,17 +24,6 @@ db = next(get_db())  # SQLAlchemy Session を取得
 
 # response_model は FastAPI がレスポンスの
 # 「型・構造」を明示するための仕組み です。
-
-
-
-# @router.post("/optimize_schedule", response_model=list[TodoOut],)
-# def optimize_schedule(db: Session = Depends(get_db), rag_component: Client = Depends(get_vector_db)):
-#     logger.info("Optimize schedule called")
-#     optimization_service = ScheduleService(db, rag_component=rag_component)
-#     logger.info("DBを引っ張ってきた。")
-#     result = optimization_service.optimize_schedule()
-#     logger.info(f"最適化完了")
-#     return result
 
 
 @router.get("/", response_model=list[TodoOut])

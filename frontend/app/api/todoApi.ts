@@ -61,4 +61,3 @@ export const updateTodo = async (
   });
   return res.json();
 }
-

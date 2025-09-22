@@ -55,6 +55,7 @@ export default function EditTodo({ todo, onUpdate, onClose }: Props) { // Props�
               value={todo.description}
               onChange={(e) => setDescription(e.target.value)}
               className={styles.input}
+              placeholder="タスクの詳細"
             />
             <div className={styles.buttonContainer}>
               <button type="button" onClick={onClose} className={`${styles.button} ${styles.buttonSecondary}`}>

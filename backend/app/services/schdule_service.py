@@ -78,104 +78,6 @@ else:
         embedding_model = None
 
 
-# --- RAG Component: RAGのロジックをカプセル化 ---
-# class RAGComponent:
-#     def __init__(self, embedding_model, db_session: Session):
-#         self.embedding_model = embedding_model
-#         self.db_session = db_session
-#         print("RAGComponent: ベクトルデータベースの準備中...")
-#         # ここにベクトルデータベースのインスタンスを初期化します (例: self.vector_db = ChromaDB(...))
-
-#     def create_vector_for_text(self, text: str) -> list:
-#         """DB内のDesctiprtionとTitle、日付、完了済みかどうかをベクトル化する"""
-#         vector_item = self.db_session.query(TodoModel)
-#         if not self.embedding_model:
-#             print("Embedding model is not available.")
-#             return []
-#         # ベクトル化する情報を一つの文字列にまとめる
-#         # time_limitがNoneの場合も考慮
-#         time_limit_str = task.time_limit.isoformat() if task.time_limit else "期限なし"
-        
-#         text_to_embed = (
-#             f"タスク名: {task.title}\n"
-#             f"詳細: {task.description}\n"
-#             f"期限: {time_limit_str}\n"
-#             f"見積時間(分): {task.estimated_minutes}\n"
-#             f"完了済み: {'はい' if task.done else 'いいえ'}"
-#         )
-
-# # --- RAG Component: RAGのロジックをカプセル化 ---
-# class RAGComponent:
-#     def __init__(self, embedding_model, db_session: Session):
-#         self.embedding_model = embedding_model
-#         self.db_session = db_session
-#         print("RAGComponent: ベクトルデータベースの準備中...")
-#         # ここにベクトルデータベースのインスタンスを初期化します (例: self.vector_db = ChromaDB(...))
-
-#     def _create_vector_from_task(self, task: TodoModel) -> list:
-#         """TodoModelオブジェクトからベクトルを生成する内部メソッド"""
-#         if not self.embedding_model:
-#             print("Embedding model is not available.")
-#             return []
-
-#         # ベクトル化する情報を一つの文字列にまとめる
-#         # time_limitがNoneの場合も考慮
-#         time_limit_str = task.time_limit.isoformat() if task.time_limit else "期限なし"
-        
-#         text_to_embed = (
-#             f"タスク名: {task.title}\n"
-#             f"詳細: {task.description}\n"
-#             f"期限: {time_limit_str}\n"
-#             f"見積時間(分): {task.estimated_minutes}\n"
-#             f"完了済み: {'はい' if task.done else 'いいえ'}"
-#         )
-        
-#         print(f"Embedding a following text:\n---\n{text_to_embed}\n---")
-
-#         try:
-#             if use_local_embedding:
-#                 # LM Studioモデルの呼び出し方を調整
-#                 return self.embedding_model.embed(text_to_embed)
-#             else:
-#                 # Google AIのembeddingモデルを使用
-#                 return self.embedding_model(model="models/embedding-001", content=text_to_embed)['embedding']
-#         except Exception as e:
-#             print(f"An error occurred during vectorization for task ID {task.id}: {e}")
-#             return []
-        
-
-#     def index_tasks_for_rag(self):
-#         """DBから全てのタスクを取得し、ベクトル化してインデックスに登録する"""
-#         print("RAGComponent: DBからタスクを取得し、インデックスを作成中...")
-        
-#         # DBからすべてのタスクを取得
-#         tasks_to_index = self.db_session.query(TodoModel).all()
-        
-#         if not tasks_to_index:
-#             print("インデックス対象のタスクが見つかりません。")
-#             return
-
-#         for task in tasks_to_index:
-#             vector = self._create_vector_from_task(task)
-#             if vector:
-#                 # ここでベクトルとメタデータをベクトルデータベースに格納
-#                 # 例: self.vector_db.add_document(vector, {"id": task.id, "title": task.title})
-#                 print(f"タスク '{task.title}' (ID: {task.id}) をインデックス化しました。")
-                
-                
-#     def find_relevant_tasks_with_rag(self, query: str, num_results=5) -> list[TodoModel]:
-#         """クエリに基づいて関連タスクを検索 (推論・フェーズ)"""
-#         print(f"RAGComponent: クエリ '{query}' に基づいて関連タスクを検索中...")
-#         query_vector = self.create_vector_for_text(query)
-        
-#         # 実際にはここでベクトル検索を実行
-#         # relevant_ids = self.vector_db.search(query_vector, k=num_results)
-#         # relevant_tasks = self.db_session.query(TodoModel).filter(TodoModel.id.in_(relevant_ids)).all()
-#         # 仮の実装として、未完了タスクの中から関連タスクを抽出
-#         unfinished_tasks = self.db_session.query(TodoModel).filter(TodoModel.done.is_(False)).all()
-#         return unfinished_tasks[:num_results]
-
-
 # schdule_service.py の RAGComponent クラス内
 
 # --- RAG Component: RAGのロジックをカプセル化 ---
@@ -282,19 +184,6 @@ class RAGComponent:
         return results['metadatas'][0] if results['metadatas'] else []
     
 
-# --- Service Class ---
-# class ScheduleService:
-    # def __init__(self, db: Session, rag_component: RAGComponent):
-    #     # __init__ はこのままでOK！依存性を明確に受け取る良い設計です。
-    #     self.db = db
-    #     self.rag = rag_component
-    #     self.llm_chain = LLMChain(
-    #         llm=llm,
-    #         prompt=PromptTemplate(
-    #             input_variables=["context", "query"],
-    #             template="コンテキスト: {context}\n\nタスク: {query}\n\nこの情報を使って、具体的で最適なスケジュールを提案してください。"
-    #         )
-    #     )
 class ScheduleService:
     def __init__(self, db: Session, rag_component: RAGComponent):
         self.db = db
@@ -311,43 +200,6 @@ class ScheduleService:
         )
         self.llm_chain = LLMChain(llm=llm, prompt=self.prompt)
 
-    # def optimize_schedule(self, query: str):
-    #     """RAGを使ってスケジュールを最適化する"""
-        
-    #     # 1. RAGコンポーネントで関連タスクの「メタデータ」を取得
-    #     # (find_relevant_tasks_with_ragはIDやタイトルを含む辞書のリストを返します)
-    #     relevant_task_metadatas = self.rag.find_relevant_tasks_with_rag(query)
-    #     if not relevant_task_metadatas:
-    #         return "関連するタスクが見つかりませんでした。"
-
-    #     # 2. ★★★【重要】メタデータからSQLのIDを抽出し、DBから完全なタスク情報を取得★★★
-    #     relevant_task_ids = [meta['sql_id'] for meta in relevant_task_metadatas]
-        
-    #     # SQLAlchemyの .in_() を使って、IDリストに一致するタスクを一度のクエリで取得
-    #     full_relevant_tasks = self.db.query(TodoModel).filter(TodoModel.id.in_(relevant_task_ids)).all()
-
-    #     # 3. 取得したタスク情報をプロンプトのコンテキストにまとめる
-    #     # (これで t.description など全てのプロパティに安全にアクセスできます)
-    #     context_docs = [
-    #         Document(page_content=f"タスク: {t.title} - 詳細: {t.description} (完了: {t.done})") 
-    #         for t in full_relevant_tasks
-    #     ]
-        
-    #     # 4. LLMに最適化を依頼 (ここは変更なし)
-    #     result = self.llm_chain.invoke({
-    #         "context": context_docs,
-    #         "query": query
-    #     })
-        
-    #     # 5. LLMの応答を解析して返す (簡略化)
-    #     try:
-    #         # 本来はここでLLMからのJSONレスポンスを解析し、DB更新などを行う
-    #         # optimized_tasks_info = json.loads(result['text'])
-    #         return result['text'] # LLMの生の応答を一旦返す
-    #     except json.JSONDecodeError:
-    #         return "LLMからの応答形式が不正です。"
-    #     except Exception as e:
-    #         return f"エラーが発生しました: {e}"
     
     
     def optimize_schedule(self):
@@ -402,4 +254,3 @@ class ScheduleService:
         # ToDo: ファイル検索のRAGロジックをここに実装する
         print(f"ID: {task_id} ({task.title}) に関連するファイルを検索します...")
         return {"file_found": "True", "content": "関連ファイルの内容（仮）"}
-    
