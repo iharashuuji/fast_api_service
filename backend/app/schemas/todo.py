@@ -32,3 +32,15 @@ class TodoUpdate(BaseModel):
     time_limit: Optional[datetime] = None
     estimated_minutes: Optional[int] = None
     priority: Optional[int] = None
+
+class ScheduleOptimizationResponse(BaseModel):
+    id: int
+    suggestion_text: str
+    created_at: datetime  # 追加する
+
+    class Config:
+        from_attributes = True
+
+
+class ErrorResponse(BaseModel):
+    error: str

@@ -1,9 +1,9 @@
 # routes_schedule.py
 from fastapi import APIRouter, HTTPException, Depends
-from app.schemas.todo import TodoOut
+from app.schemas.todo import TodoOut, ScheduleOptimizationResponse, ErrorResponse
 from app.services.todo_service import TodoService
 from app.database import get_db, get_vector_db
-from typing import List
+from typing import List, Union
 from sqlalchemy.orm import Session
 from datetime import datetime
 from pydantic import BaseModel
@@ -44,7 +44,7 @@ def get_related_file(
     return file_data
 
 
-@router.post("/optimize", response_model=List[TodoOut])
+@router.post("/optimize", response_model=Union[ScheduleOptimizationResponse, ErrorResponse])
 async def optimize_schedule(
     request: OptimizeRequest, 
     db: Session = Depends(get_db),
@@ -89,11 +89,13 @@ async def optimize_schedule(
         schdule_service = ScheduleService(db=db, rag_component=vector_db_client)
         logger.info('モデルの初期化完了 & 最適化開始')
         optimized_tasks = schdule_service.optimize_schedule()
+        logger.debug(f'type. optimizer_tasks{type(optimized_tasks)}')
         logger.debug(f'データをすべて取得: {optimized_tasks}')
         optimized_todos = todo_service.get_all_todos(db)
         logger.info('完了')
         
-        return optimized_todos
+        return optimized_tasks # optimized_todos
+    
     except Exception as e:
         logger.error(f"APIエンドポイントで予期せぬエラーが発生しました: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))

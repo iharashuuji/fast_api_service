@@ -11,6 +11,24 @@ export type Todo = {
   description: string | null;
 };
 
+// 1. スケジュール最適化の成功結果の型
+type SuccessResult = {
+  id: number;
+  suggestion_text: string;
+  created_at: string;
+  confidence_score?: number;  // 信頼度スコア（オプショナル）
+  task_ids?: number[];       // 関連するタスクのID配列
+};
+
+// 2. エラー結果の型
+type ErrorResult = {
+  error: string;
+};
+
+// 3. 最適化結果の共用型
+export type OptimizationResult = SuccessResult | ErrorResult;
+
+
 const BASE_URL = "http://localhost:8000/api/todo";
 
 export const fetchTodos = async (): Promise<Todo[]> => {
