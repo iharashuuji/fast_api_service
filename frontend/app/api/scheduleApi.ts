@@ -1,5 +1,5 @@
 // frontend/app/api/scheduleApi.ts
-import { Todo } from './todoApi';
+import { Todo, OptimizationResult } from './todoApi';
 
 const BASE_URL = "http://localhost:8000/api/schedule";
 
@@ -8,7 +8,7 @@ export const fetchSchedule = async (): Promise<Todo[]> => {
   return res.json();
 };
 
-export const optimizeSchedule = async (date: string): Promise<Todo[]> => {
+export const optimizeSchedule = async (date: string): Promise<OptimizationResult[]> => { //もともとTodoが入っていた
   const res = await fetch(`${BASE_URL}/optimize`, {
     method: "POST",
     headers: {

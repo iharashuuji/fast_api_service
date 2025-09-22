@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchTodos, createTodo, updateTodo, Todo } from "./api/todoApi";
+import { fetchTodos, createTodo, updateTodo, Todo, OptimizationResult } from "./api/todoApi";
 import TodoForm from "./components/TodoForm";
 import TodoList from "./components/TodoList";
 import EditTodo from "./components/EditTodo";
@@ -10,9 +10,12 @@ import styles from './page.module.css';
 
 
 export default function Home() {
+  
   const [todos, setTodos] = useState<Todo[]>([]);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null); // モーダルの表示/非表示を管理
-
+  // 1. 最適化結果（提案）を保存するためのState
+  const [optimizationResult, setOptimizationResult] = useState<OptimizationResult | null>(null);
+  // 2. 処理中のローディング状態を管理するState
   const loadTodos = async () => {
     const data = await fetchTodos();
     setTodos(data);

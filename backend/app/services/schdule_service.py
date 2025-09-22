@@ -2,7 +2,7 @@
 
 # --- Imports ---
 from sqlalchemy.orm import Session
-from app.models.todo_model import TodoModel
+from app.models.todo_model import TodoModel, ScheduleOptimizationResult
 from app.schemas.todo import TodoOut
 import os
 import json
@@ -216,46 +216,7 @@ class ScheduleService:
         )
         self.chain = self.file_search_prompt | llm
     
-    # def optimize_schedule(self):
-    #     """全ての未完了タスクを対象にスケジュールを最適化する"""
-    
-    #     # 1. 未完了タスクを直接取得
-    #     logger.info('タスクの取得')
-    #     incomplete_tasks = self.db.query(TodoModel).filter(
-    #         TodoModel.done == False
-    #     ).all()
 
-    #     if not incomplete_tasks:
-    #         return "最適化対象のタスクが見つかりませんでした。"
-
-    #     # 2. タスク情報をコンテキストにまとめる
-    #     context_docs = [
-    #         Document(page_content=(
-    #         f"タスク: {t.title}\n"
-    #         f"詳細: {t.description}\n"
-    #         f"期限: {t.time_limit}\n"
-    #         f"見積時間: {t.estimated_minutes}分"
-    #         )) 
-    #         for t in incomplete_tasks
-    #     ]
-    
-    #     # 3. LLMに最適化を依頼
-    #     result = self.llm_chain.invoke({
-    #         "context": context_docs,
-    #         "query": "これらのタスクの最適な実行順序とスケジュールを提案してください。期限と見積時間を考慮してください。"
-    #     })
-        
-        
-        
-    #     try:
-    #         return result['text']
-    #     except Exception as e:
-    #         return f"スケジュール最適化中にエラーが発生しました: {e}"
-
-    #     except Exception as e:
-    #         logger.error(f"スケジュール最適化中にエラーが発生: {e}")
-    #         # エラー時は元の未完了タスクをそのまま返す
-    #         return self.db.query(TodoModel).filter(TodoModel.done == False).all()
     def optimize_schedule(self):
         """全ての未完了タスクを対象にスケジュールを最適化し、提案としてDBに保存する"""
         
@@ -305,11 +266,19 @@ class ScheduleService:
             self.db.refresh(new_suggestion) # DBに保存された最新の状態を取得
 
             # ★ 6. 保存した提案オブジェクトを返す
+            # 6. 最適化対象となった各タスクに、新しい提案のIDを紐付ける
+            logger.info(f"対象タスクに最適化結果ID {new_suggestion.id} を紐付けます")
+            for task in incomplete_tasks:
+                task.optimization_id = new_suggestion.id
+            
+            self.db.commit() # IDの紐付けをDBに保存
+
+            # 7. 保存した提案オブジェクトを返す
+            #    フロントエンドはこれを受け取り、提案内容を表示する
             return new_suggestion
 
         except Exception as e:
             logger.error(f"スケジュール最適化中にエラーが発生: {e}")
-            # エラー発生時はエラー情報を含んだオブジェクトを返す
             return {"error": f"スケジュール最適化中にエラーが発生しました: {str(e)}"}
 
 
