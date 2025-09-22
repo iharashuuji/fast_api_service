@@ -42,6 +42,7 @@ use_local_api = os.getenv("USE_LOCAL_API") == "true"
 lmstudio_model_name = os.getenv('LOCAL_MODEL_NAME')
 use_local_embedding = os.getenv("USE_LOCAL_EMBEDDING") == "true"
 google_api_key = os.getenv("GOOGLE_API_KEY")
+search_directory = os.getenv("SEARCH_DIR")
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -200,57 +201,257 @@ class ScheduleService:
         )
         self.llm_chain = LLMChain(llm=llm, prompt=self.prompt)
 
+        # ファイル検索用のプロンプトを定義
+        self.file_search_prompt = PromptTemplate(
+            template=(
+                "以下のタスクに関連する最適なファイルを選び、その理由を説明してください。\n\n"
+                "タスク情報:\n{task_info}\n\n"
+                "検索対象ファイル:\n{files}\n\n"
+                "回答形式:\n"
+                "選択したファイル: [ファイルパス]\n"
+                "選択理由: [理由の説明]\n"
+                "関連度: [高/中/低]\n"
+            ),
+            input_variables=["task_info", "files"]
+        )
+        self.chain = self.file_search_prompt | llm
     
+    # def optimize_schedule(self):
+    #     """全ての未完了タスクを対象にスケジュールを最適化する"""
     
+    #     # 1. 未完了タスクを直接取得
+    #     logger.info('タスクの取得')
+    #     incomplete_tasks = self.db.query(TodoModel).filter(
+    #         TodoModel.done == False
+    #     ).all()
+
+    #     if not incomplete_tasks:
+    #         return "最適化対象のタスクが見つかりませんでした。"
+
+    #     # 2. タスク情報をコンテキストにまとめる
+    #     context_docs = [
+    #         Document(page_content=(
+    #         f"タスク: {t.title}\n"
+    #         f"詳細: {t.description}\n"
+    #         f"期限: {t.time_limit}\n"
+    #         f"見積時間: {t.estimated_minutes}分"
+    #         )) 
+    #         for t in incomplete_tasks
+    #     ]
+    
+    #     # 3. LLMに最適化を依頼
+    #     result = self.llm_chain.invoke({
+    #         "context": context_docs,
+    #         "query": "これらのタスクの最適な実行順序とスケジュールを提案してください。期限と見積時間を考慮してください。"
+    #     })
+        
+        
+        
+    #     try:
+    #         return result['text']
+    #     except Exception as e:
+    #         return f"スケジュール最適化中にエラーが発生しました: {e}"
+
+    #     except Exception as e:
+    #         logger.error(f"スケジュール最適化中にエラーが発生: {e}")
+    #         # エラー時は元の未完了タスクをそのまま返す
+    #         return self.db.query(TodoModel).filter(TodoModel.done == False).all()
     def optimize_schedule(self):
-        """全ての未完了タスクを対象にスケジュールを最適化する"""
-    
-        # 1. 未完了タスクを直接取得
-        logger.info('タスクの取得')
-        incomplete_tasks = self.db.query(TodoModel).filter(
-            TodoModel.done == False
-        ).all()
-
-        if not incomplete_tasks:
-            return "最適化対象のタスクが見つかりませんでした。"
-
-        # 2. タスク情報をコンテキストにまとめる
-        context_docs = [
-            Document(page_content=(
-            f"タスク: {t.title}\n"
-            f"詳細: {t.description}\n"
-            f"期限: {t.time_limit}\n"
-            f"見積時間: {t.estimated_minutes}分"
-            )) 
-            for t in incomplete_tasks
-        ]
-    
-        # 3. LLMに最適化を依頼
-        result = self.llm_chain.invoke({
-            "context": context_docs,
-            "query": "これらのタスクの最適な実行順序とスケジュールを提案してください。期限と見積時間を考慮してください。"
-        })
+        """全ての未完了タスクを対象にスケジュールを最適化し、提案としてDBに保存する"""
         
         try:
-            return result['text']
-        except Exception as e:
-            return f"スケジュール最適化中にエラーが発生しました: {e}"
+            # 1. 未完了タスクを直接取得
+            logger.info('未完了タスクの取得を開始')
+            incomplete_tasks = self.db.query(TodoModel).filter(
+                TodoModel.done == False
+            ).all()
+
+            if not incomplete_tasks:
+                # ★ 提案を作成せずにメッセージを返す
+                return {"suggestion_text": "最適化対象のタスクが見つかりませんでした。"}
+
+            # 2. タスク情報をコンテキストにまとめる
+            context_docs = [
+                Document(page_content=(
+                f"タスク: {t.title}\n"
+                f"詳細: {t.description}\n"
+                f"期限: {t.time_limit}\n"
+                f"見積時間: {t.estimated_minutes}分"
+                )) 
+                for t in incomplete_tasks
+            ]
+        
+            # 3. LLMに最適化を依頼
+            logger.info('LLMにスケジュール最適化を依頼')
+            result = self.llm_chain.invoke({
+                "context": context_docs,
+                "query": "これらのタスクの最適な実行順序とスケジュールを、具体的な時間や手順を含めて提案してください。期限と見積時間を考慮し、簡潔なマークダウン形式でまとめてください。"
+            })
+            
+            # ★ 4. LLMの応答テキストを抽出
+            #    (お使いのLangChainのバージョンにより .content または ['text'])
+            suggestion_text = result.content if hasattr(result, 'content') else result.get('text', '')
+
+            if not suggestion_text:
+                raise ValueError("LLMから有効な応答テキストを取得できませんでした。")
+
+            # ★ 5. 新しい提案オブジェクトを作成し、DBに保存
+            logger.info('LLMの提案をデータベースに保存')
+            new_suggestion = ScheduleOptimizationResult(
+                suggestion_text=suggestion_text
+            )
+            self.db.add(new_suggestion)
+            self.db.commit()
+            self.db.refresh(new_suggestion) # DBに保存された最新の状態を取得
+
+            # ★ 6. 保存した提案オブジェクトを返す
+            return new_suggestion
 
         except Exception as e:
             logger.error(f"スケジュール最適化中にエラーが発生: {e}")
-            # エラー時は元の未完了タスクをそのまま返す
-            return self.db.query(TodoModel).filter(TodoModel.done == False).all()
+            # エラー発生時はエラー情報を含んだオブジェクトを返す
+            return {"error": f"スケジュール最適化中にエラーが発生しました: {str(e)}"}
+
 
 
     def find_related_file_for_task(self, task_id: int):
-        """
-        指定されたタスクIDに関連するファイルを探す（このメソッドのロジックはOK）
-        """
-        # self.db を使ってDBセッションにアクセスできているので、この実装は正しいです。
+        """指定されたタスクIDに関連するファイルを探す"""
+        logger.info(f"タスクID {task_id} の関連ファイル検索を開始")
+
+        # 1. タスク情報の取得
         task = self.db.query(TodoModel).filter(TodoModel.id == task_id).first()
         if not task:
-            return None
+            logger.warning(f"タスクID {task_id} が見つかりません")
+            return None # エラーレスポンスを返す方が親切かもしれません
+
+        # 2. 先にLLMの応答キャッシュを確認する
+        if task.llm_response_cache:
+            logger.info(f"タスクID {task_id} のLLM応答キャッシュが見つかりました。")
+            # 応答キャッシュがあるなら、ファイル内容もキャッシュされているはず
+            return {
+                "file_found": bool(task.file_contents_cache),
+                "llm_response": task.llm_response_cache,
+                "raw_files": task.file_contents_cache
+            }
+
+        # 3. LLMキャッシュがない場合、次にファイル内容のキャッシュを確認
+        if task.file_contents_cache:
+            logger.info(f"タスクID {task_id} のファイル内容キャッシュが見つかりました。")
+            file_contents = task.file_contents_cache
+        else:
+            logger.info(f"タスクID {task_id} のキャッシュはありません。ファイルシステムをスキャンします。")
+            # 4. キャッシュがない場合、ファイルシステムをスキャン
+            file_contents = []
+            for root, _, files in os.walk(search_directory):
+                for file in files:
+                    if file.endswith(('.txt', '.md', '.py', '.js', '.html', '.css')):
+                        file_path = os.path.join(root, file)
+                        try:
+                            with open(file_path, 'r', encoding='utf-8') as f:
+                                content = f.read()
+                                file_contents.append({
+                                    'path': os.path.relpath(file_path, search_directory),
+                                    'content': content[:1000] # 内容を1000文字に制限
+                                })
+                        except Exception as e:
+                            logger.warning(f"ファイル {file_path} の読み込みに失敗: {e}")
+
+            # 5. スキャン結果をDBに保存（キャッシュする）
+            if file_contents:
+                task.file_contents_cache = file_contents
+                self.db.commit()
+                self.db.refresh(task) # DBの最新の状態でtaskオブジェクトを更新
+                logger.info(f"タスクID {task_id} のファイルコンテンツをDBにキャッシュしました。")
+
+        # ★★★ ロジックの変更はここまで ★★★
+
+        try:
+            # 6. LLMで関連性を判定 (この部分は変更なし)
+            result = self.chain.invoke({
+                "task_info": f"タイトル: {task.title}\n説明: {task.description}\n期限: {task.time_limit}\n",
+                "files": "\n".join([f"ファイル: {f['path']}\n内容: {f['content']}\n"
+                                  for f in file_contents])
+            })
+            
+            llm_response_text = result.content
+            task.llm_response_cache = llm_response_text
+            self.db.commit()
+            self.db.refresh(task)
+            logger.info(f"タスクID {task_id} のLLM応答をDBにキャッシュしました。")
+
+            # 7. 応答を返す (この部分は変更なし)
+            return {
+                "file_found": bool(file_contents), # file_contentsが空でないかを判定
+                "llm_response": result.content,
+                "raw_files": file_contents
+            }
+
+        except Exception as e:
+            logger.error(f"関連ファイル検索中にエラー発生: {e}")
+            return {
+                "file_found": False,
+                "error": f"検索処理中にエラーが発生しました: {str(e)}"
+            }
+            
+            
+            
+            
+            
+            
+   # def find_related_file_for_task(self, task_id: int):
+    #     """指定されたタスクIDに関連するファイルを探す"""
+    #     logger.info(f"タスクID {task_id} の関連ファイル検索を開始")
+    
+    #     # 1. タスク情報の取得
+    #     task = self.db.query(TodoModel).filter(TodoModel.id == task_id).first()
+    #     logger.info('タスクが見つかりました')
+    #     if not task:
+    #         logger.warning(f"タスクID {task_id} が見つかりません")
+    #         return None
+
+    #     # 2. 検索対象ディレクトリの確認
+    #     if not search_directory or not os.path.exists(search_directory):
+    #         logger.error(f"検索ディレクトリが無効です: {search_directory}")
+    #         return {"error": "検索ディレクトリが設定されていないか、存在しません"}
+
+    #     # 3. タスク情報を準備
+    #     task_context = (
+    #         f"タイトル: {task.title}\n"
+    #         f"説明: {task.description}\n"
+    #         f"期限: {task.time_limit}\n"
+    #     )
+
+    #     # 4. ファイル一覧の取得と内容の読み込み
+    #     file_contents = []
         
-        # ToDo: ファイル検索のRAGロジックをここに実装する
-        print(f"ID: {task_id} ({task.title}) に関連するファイルを検索します...")
-        return {"file_found": "True", "content": "関連ファイルの内容（仮）"}
+    #     # file_contentsがそもそもDBにある可能性を考慮する。
+                        
+            
+    #     for root, _, files in os.walk(search_directory):
+    #         for file in files:
+    #             if file.endswith(('.txt', '.md', '.py', '.js', '.html', '.css')):
+    #                 file_path = os.path.join(root, file)
+    #                 try:
+    #                     with open(file_path, 'r', encoding='utf-8') as f:
+    #                         content = f.read()
+    #                         file_contents.append({
+    #                             'path': os.path.relpath(file_path, search_directory),
+    #                             'content': content[:1000]
+    #                         })
+    #                 except Exception as e:
+    #                     logger.warning(f"ファイル {file_path} の読み込みに失敗: {e}")
+
+    #     try:
+    #         # 5. LLMで関連性を判定
+    #         result = self.chain.invoke({
+    #             "task_info": task_context,
+    #             "files": "\n".join([f"ファイル: {f['path']}\n内容: {f['content']}\n" 
+    #                               for f in file_contents])
+    #         })
+
+    #         # 6. 応答の解析（シンプルなテキスト形式）
+    #         return {
+    #             "file_found": True,
+    #             "llm_response": result.content,
+    #             "raw_files": file_contents
+            # }

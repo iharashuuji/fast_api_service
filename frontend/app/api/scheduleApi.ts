@@ -23,3 +23,31 @@ export const optimizeSchedule = async (date: string): Promise<Todo[]> => {
   
   return res.json();
 };
+
+const getRelatedFile = async (taskId: number) => {
+  try {
+    console.log('呼び出し開始');
+    console.log(`/api/schedule/${taskId}/related_file`);
+    
+    const response = await fetch(
+      `http://localhost:8000/api/schedule/${taskId}/related_file`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`APIエラー: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('呼び出し完了', data);
+    return data;
+  } catch (error) {
+    console.error('関連ファイル取得エラー:', error);
+    throw error;
+  }
+};

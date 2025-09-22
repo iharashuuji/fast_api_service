@@ -1,5 +1,5 @@
 # backend/app/models/todo_model.py
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, JSON, Text
 from app.database import Base
 
 
@@ -14,4 +14,7 @@ class TodoModel(Base):
     priority = Column(Integer, nullable=True)
     description = Column(String, nullable=True)
     is_vectorized = Column(Boolean, default=False, nullable=False)
-    suggestion_reason = Column(String, nullable=True) 
+    suggestion_reason = Column(String, nullable=True)
+    file_contents_cache = Column(JSON, nullable=True)
+    llm_response_cache = Column(Text, nullable=True)
+    
