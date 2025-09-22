@@ -6,10 +6,11 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.schemas.todo import TodoCreate, TodoOut, TodoUpdate
 from app.services.todo_service import TodoService
-from app.services.schdule_service import ScheduleService
-from app.database import get_db
+from app.services.schdule_service import ScheduleService, RAGComponent
+from app.database import get_db, get_vector_db
 import logging
 from sqlalchemy.orm import Session
+from chromadb import Client
 
 
 logger = logging.getLogger("uvicorn")  # uvicorn ログと統合される
@@ -23,13 +24,6 @@ db = next(get_db())  # SQLAlchemy Session を取得
 
 # response_model は FastAPI がレスポンスの
 # 「型・構造」を明示するための仕組み です。
-optimization_service = ScheduleService()
-
-
-@router.post("/optimize_schedule", response_model=list[TodoOut])
-def optimize_schedule(db: Session = Depends(get_db)):
-    result = optimization_service.optimize_schedule(db)
-    return result
 
 
 @router.get("/", response_model=list[TodoOut])

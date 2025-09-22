@@ -15,7 +15,7 @@ RUN npm install
 COPY . .
 
 # Next.jsアプリケーションをビルド
-RUN npm run build
+RUN npm run build 
 
 # =========
 # 本番ステージ
@@ -44,4 +44,6 @@ RUN addgroup --system --gid 1001 nodejs && \
 USER nextjs
 
 # アプリケーションを起動
-CMD ["npm", "run", "start"]
+CMD ["npm", "run", "start"] 
+
+# CMD ["npm", "run", "start"]  # 本番環境用コマンド

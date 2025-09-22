@@ -1,2 +1,5 @@
 Node.jsでサーバーで立ち上げる。
 lmstudio server start --model ~/models/gemma-3-1b --port 1234 --api-key lm-studio
+
+./backend/app/api/routes_schedule.py:13:1: E302 expected 2 blank lines, found 0
+./backend/app/api/routes_todo.py:13:1: F401 'app.services.schdule_service.search_file' imported but unused

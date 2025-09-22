@@ -8,6 +8,7 @@ export type Todo = {
   done: boolean;
   time_limit: string | null;
   estimated_minutes: number | null;
+  description: string | null;
 };
 
 const BASE_URL = "http://localhost:8000/api/todo";
